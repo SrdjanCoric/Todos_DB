@@ -69,18 +69,18 @@ def add_list():
 
 @app.route("/lists")
 def get_lists():
-    lists = sort_items(session['lists'], is_list_completed)
+    lists = sort_items(g.storage.all_lists(), is_list_completed)
     return render_template('lists.html', lists=lists, todos_remaining = todos_remaining)
 
 @app.route("/lists", methods=["POST"])
 def create_list():
     name = request.form["list_name"].strip()
-    error = error_for_list_name(name, session['lists'])
+    error = error_for_list_name(name, g.storage.all_lists())
     if error:
         flash(error, "error")
         return render_template('new_list.html', title=name)
 
-    session['lists'].append({'id': str(uuid4()), 'name': name, 'todos': []})
+    g.storage.create_new_list(name)
     flash("The list has been created.", "success")
     session.modified = True
     return redirect(url_for('get_lists'))
