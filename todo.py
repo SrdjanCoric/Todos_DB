@@ -14,7 +14,6 @@ from utils import (
     error_for_list_name,
     error_for_todo,
     find_todo_by_id,
-    remove_todo_by_id,
     mark_all_completed,
     todos_remaining,
     is_list_completed,
@@ -99,37 +98,32 @@ def create_todo(lst, list_id):
     if error:
         flash(error, "error")
         return render_template('list.html', lst=lst, todo_name=todo_name)
-    lst['todos'].append({'id': str(uuid4()), 'name': todo_name, 'completed': False})
+    g.storage.create_new_todo(list_id, todo_name)
     flash("The todo was added.", "success")
-    session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
 
 @app.route("/lists/<list_id>/todos/<todo_id>/toggle", methods=["POST"])
 @require_todo
 def update_todo_status(lst, todo, list_id, todo_id):
     is_completed = request.form['completed'] == 'True'
-    todo['completed'] = is_completed
-
+    g.storage.update_todo_status(list_id, todo_id, is_completed)
     flash("The todo has been updated.", "success")
-    session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
 
 @app.route("/lists/<list_id>/todos/<todo_id>/delete", methods=["POST"])
 @require_todo
 def delete_todo(lst, todo, list_id, todo_id):
-    remove_todo_by_id(todo_id, lst)
+    g.storage.delete_todo_from_list(list_id, todo_id)
 
     flash("The todo has been deleted.", "success")
-    session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
 
 @app.route("/lists/<list_id>/complete_all", methods=["POST"])
 @require_list
 def mark_all_todos_completed(list_id, lst):
-    mark_all_completed(lst)
+    g.storage.mark_all_todos_as_completed(list_id)
 
     flash("All todos have been updated.", "success")
-    session.modified = True
     return redirect(url_for('show_list', list_id=list_id))
 
 @app.route("/lists/<list_id>/edit")
@@ -140,10 +134,8 @@ def edit_list(lst, list_id):
 @app.route("/lists/<list_id>/delete", methods=["POST"])
 @require_list
 def delete_list(lst, list_id):
-    session['lists'] = [l for l in session['lists'] if l['id'] != list_id]
-
+    g.storage.delete_list(list_id)
     flash("The list has been deleted.", "success")
-    session.modified = True
     return redirect(url_for('get_lists'))
 
 @app.route("/lists/<list_id>", methods=["POST"])
@@ -154,9 +146,8 @@ def update_list(lst, list_id):
     if error:
         flash(error, "error")
         return render_template('edit_list.html', lst=lst, name=name)
-    lst['name'] = name
+    g.storage.update_list_name(list_id, name)
     flash("The list has been updated.", "success")
-    session.modified = True
     return redirect(url_for('get_lists'))
 
 if __name__ == "__main__":

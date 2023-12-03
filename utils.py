@@ -14,10 +14,6 @@ def error_for_todo(name):
 def find_todo_by_id(todo_id, todos):
     return next((todo for todo in todos if todo['id'] == todo_id), None)
 
-def remove_todo_by_id(todo_id, lst):
-    lst['todos'] = [todo for todo in lst['todos'] if todo['id'] != todo_id]
-    return None
-
 def mark_all_completed(lst):
     for todo in lst['todos']:
         todo['completed'] = True
